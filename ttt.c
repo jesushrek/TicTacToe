@@ -8,7 +8,7 @@ static const char g_empty = ' ';
 typedef struct 
 { 
     int row;
-    int colomn;
+    int column;
 }Place;
 
 
@@ -57,6 +57,11 @@ static void populate( char t[3][3] )
             t[i][j] = g_empty;
         }
     }
+}
+
+bool checkBounds( int row, int column )
+{ 
+    return (row >= 0 && row <=2) && (column >= 0 && column <=2);
 }
 
 static const bool isTurnLeft( char t[3][3] )
@@ -141,7 +146,7 @@ static const int miniMax( char t[3][3], int depth, bool isMax )
 Place findBestMove(char t[3][3])
 {
     int bestScore = -1000;
-    Place winningPlace = { .row = -1, .colomn = -1 };
+    Place winningPlace = { .row = -1, .column = -1 };
     int i = 0;
     for(; i < 3; ++i)
     {
@@ -158,7 +163,7 @@ Place findBestMove(char t[3][3])
                 {
                     bestScore = newScore;
                     winningPlace.row = i;
-                    winningPlace.colomn = j;
+                    winningPlace.column = j;
                 }
             }
         }
@@ -169,12 +174,12 @@ Place findBestMove(char t[3][3])
 void computerMove( char t[3][3] )
 { 
     Place selected = findBestMove(t);
-    if( selected.row == -1 && selected.colomn == -1 )
+    if( selected.row == -1 && selected.column == -1 )
     {
         return;
     }
 
-    t[selected.row][selected.colomn] = g_symbolX;
+    t[selected.row][selected.column] = g_symbolX;
 }
 
 static void multiplayer()
@@ -191,17 +196,23 @@ static void multiplayer()
         printf("Enter row: ");
         int row = 0;
         scanf("%d", &row);
-        printf("Enter colomn: ");
-        int colomn = 0;
-        scanf("%d", &colomn);
+        printf("Enter column: ");
+        int column = 0;
+        scanf("%d", &column);
 
-        if( ttt[row][colomn] != g_empty )
+        if(!checkBounds(row, column))
+        {
+            printf("\nOut of bounds, I am sorry try again: \n");
+            continue;
+        }
+
+        if( ttt[row][column] != g_empty )
         {
             printf("\nalready used I am afraid try again: \n");
             continue;
         }
 
-        ttt[row][colomn] = (isTurnX)? 'x' : 'o';
+        ttt[row][column] = (isTurnX)? 'x' : 'o';
         printBoard(ttt);
 
         score = evaluate(ttt);
@@ -227,17 +238,22 @@ int singlePlayer()
         printf("Enter row: ");
         int row = 0;
         scanf("%d", &row);
-        printf("Enter colomn: ");
-        int colomn = 0;
-        scanf("%d", &colomn);
+        printf("Enter column: ");
+        int column = 0;
+        scanf("%d", &column);
 
-        if( ttt[row][colomn] != g_empty )
+        if( ttt[row][column] != g_empty )
         {
             printf("\nalready used I am afraid try again: \n");
             continue;
         }
 
-        ttt[row][colomn] = 'o';
+        if(!checkBounds(row, column))
+        {
+            printf("\n Out of bounds, I am sorry try again: \n");
+        }
+
+        ttt[row][column] = 'o';
         computerMove(ttt);
         printBoard(ttt);
 
@@ -264,5 +280,6 @@ int main()
             singlePlayer();
             break;
     }
+
     return 0;
 }
