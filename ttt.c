@@ -264,4 +264,5 @@ int main()
             singlePlayer();
             break;
     }
+    return 0;
 }
