@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 static const char g_symbolX = 'x';
 static const char g_symbolO = 'o';
@@ -143,9 +144,9 @@ static const int miniMax( char t[3][3], int depth, bool isMax )
     }
 }
 
-Place findBestMove(char t[3][3])
+Place findBestMove(char t[3][3], bool isMax)
 {
-    int bestScore = -1000;
+    int bestScore = isMax? -100000 : 100000;
     Place winningPlace = { .row = -1, .column = -1 };
     int i = 0;
     for(; i < 3; ++i)
@@ -155,15 +156,27 @@ Place findBestMove(char t[3][3])
         { 
             if(t[i][j] == g_empty)
             {
-                t[i][j] = g_symbolX;
-                int newScore = miniMax( t, 0, false );
+                t[i][j] = isMax? g_symbolX : g_symbolO;
+                int newScore = miniMax( t, 0, !isMax );
                 t[i][j] = g_empty;
 
-                if( newScore > bestScore )
-                {
-                    bestScore = newScore;
-                    winningPlace.row = i;
-                    winningPlace.column = j;
+                if(isMax)
+                { 
+                    if( newScore > bestScore )
+                    {
+                        bestScore = newScore;
+                        winningPlace.row = i;
+                        winningPlace.column = j;
+                    }
+                }
+                else
+                { 
+                    if( newScore < bestScore )
+                    {
+                        bestScore = newScore;
+                        winningPlace.row = i;
+                        winningPlace.column = j;
+                    }
                 }
             }
         }
@@ -171,15 +184,15 @@ Place findBestMove(char t[3][3])
     return winningPlace;
 }
 
-void computerMove( char t[3][3] )
+void computerMove( char t[3][3], bool isMax )
 { 
-    Place selected = findBestMove(t);
+    Place selected = findBestMove(t, isMax);
     if( selected.row == -1 && selected.column == -1 )
     {
         return;
     }
 
-    t[selected.row][selected.column] = g_symbolX;
+    t[selected.row][selected.column] = isMax? g_symbolX : g_symbolO;
 }
 
 static void multiplayer()
@@ -254,7 +267,7 @@ int singlePlayer()
         }
 
         ttt[row][column] = 'o';
-        computerMove(ttt);
+        computerMove(ttt, true);
         printBoard(ttt);
 
         score = evaluate(ttt);
@@ -266,19 +279,60 @@ int singlePlayer()
     check(score);
 }
 
-int main()
+void botVbot()
+{
+    bool isMax = true;
+    char board[3][3] = {
+        { g_empty, g_empty, g_empty },
+        { g_empty, g_empty, g_empty },
+        { g_empty, g_empty, g_empty }
+    };
+    while(isTurnLeft(board) && evaluate(board) == 0)
+    {
+        printf("%c's turn\n", isMax? 'x' : 'o');
+        computerMove(board, isMax);
+        isMax = !isMax;
+        printBoard(board);
+    }
+    printf("Results\n");
+    if( evaluate(board) == 0)
+        printf("Its a tie\n");
+    else if( evaluate(board) == 10 )
+        printf("X won\n");
+    else
+        printf("O won\n");
+    printBoard(board);
+}
+
+
+int main(int argc, char* argv[])
 { 
-    printf(" 1 to play multiplayer and 2 to play single: ");
-    int choice = 0;
-    scanf("%d", &choice);
-    switch(choice)
+    if( argc != 2 )
     { 
-        case 1: 
-            multiplayer();
-            break;
-        case 2: 
-            singlePlayer();
-            break;
+        printf("Usage: %s [ -multi | -single | -bvb ]\n", argv[0]);
+        printf(" -multi for multiplayer \n");
+        printf(" -single for singleplayer \n");
+        printf(" -bvb for bot vs bot \n");
+        return 1;
+    }
+    else if(strcmp(argv[1], "-single") == 0)
+    {
+        printf("Singleplayer: \n");
+        singlePlayer();
+    }
+    else if(strcmp(argv[1], "-multi") == 0 )
+    {
+        printf("Multiplayer: \n");
+        multiplayer();
+    }
+    else if(strcmp(argv[1], "-bvb") == 0 )
+    {
+        printf("Bot Vs Bot:\n");
+        botVbot();
+    }
+    else 
+    { 
+        printf("Error: The user is retarded\n");
     }
 
     return 0;
